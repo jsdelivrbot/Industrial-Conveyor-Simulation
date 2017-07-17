@@ -2,13 +2,13 @@ const Application = (function() {
 	var sm = new StateMachine({
 		"unitialized": {},
 		"loading": {},
-		"moving": {}
+		"normal": {}
 	});
-	
+
 	var logDifference, updateCinematic, updateWorld, renderFunc;
-	
+
 	var difference, timeStamp, lastTimeStamp = 0;
-	
+
 	function loop() {
 		timeStamp = performance.now();
 		difference = timeStamp - lastTimeStamp;
@@ -16,7 +16,7 @@ const Application = (function() {
 		lastTimeStamp = timeStamp;
 		window.requestAnimationFrame(loop);
 	}
-	
+
 	function update(difference) {
 		logDifference(difference);
 		updateCinematic(difference);
@@ -26,21 +26,23 @@ const Application = (function() {
 
 	return {
 		initEvents: function() {
+			sm.state = "loading";
 			window.addEventListener("mousemove", this.onCursorMove.bind(this));
 			window.addEventListener("keydown", this.onKeyDown.bind(this));
 			window.addEventListener("touchmove", this.onCursorMove.bind(this));
 		},
 		initMainLoop: function(gatherer) {
+			sm.state = "normal";
 			logDifference = gatherer.performancer.update.bind(gatherer.performancer);
 			updateWorld = gatherer.world.update.bind(gatherer.world);
-			renderFunc = gatherer.gui.renderer.bind(gatherer.gui);
+			renderFunc = gatherer.userInterface.render.bind(gatherer.userInterface);
 			updateCinematic = gatherer.cinematic.update.bind(gatherer.cinematic);
 			update(16);
 		},
 		setPerformancer: function(p) {
 			performancer = p;
 		},
-		onCursorMove: function() {
+		onCursorMove: function(event) {
 			
 		},
 		onKeyDown: function(event) {

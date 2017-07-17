@@ -48,9 +48,7 @@ const GUI = (function() {
 			this.render();
 		},
 		render: function() {
-			for (let i = 0; i < this.renderers.length; i++) {
-				this.renderers[i].render(this.scenes[i], this.camera);
-			}
+			this.renderer.render(this.scene, this.camera);
 		}
 	}
 })();

@@ -3,17 +3,17 @@
 */
 const Load = (function() {
 	var gathering = {}, 	
-		loaderInterface = new LoaderInterface(document.getElementById("wrapper"));
+		loaderInterface = new LoaderInterface();
 	var stepList = [
 		new LoadingStep("Initializing Loader Interface", "sync", () => {
-			loaderInterface.init();
+			loaderInterface.init(document.getElementById("wrapper"));
 		}),
 		new LoadingStep("Initializing Loader Module", "sync", () => {
 			gathering.userInterface = GUI;
 			gathering.application = Application;
 		}),
 		new LoadingStep("Interpreting Url Parameters", "sync", () => {
-			gathering.settings = new SettingsManager();
+			gathering.settings = new SettingManager();
 		}),
 		new LoadingStep("Initializing Performancer", "sync", () => {
 			gathering.performancer = new Performancer();
@@ -32,7 +32,6 @@ const Load = (function() {
 			var imageList = gathering.imageLoader.getImages();
 			gathering.world = new WorldHandler();
 			gathering.world.setImageList(gathering.imageList);
-			gathering.application.setWorld(gathering.world);
 		}),
 		new LoadingStep("Initializing WebWorker", "sync", () => {
 			if (typeof (Worker) === "undefined") {
@@ -54,11 +53,11 @@ const Load = (function() {
 			gathering.cinematic = new Cinematic(camera);
 		}),
 		new LoadingStep("Initializing Events", "sync", () => {
-			gathering.application.initEvents();
-			gathering.userInterface.initEvents();
+			gathering.application.initEvents(gathering);
+			gathering.userInterface.initEvents(gathering);
 		}),
 		new LoadingStep("Initializing Main Loop", "sync", () => {
-			gathering.application.initMainLoop();
+			gathering.application.initMainLoop(gathering);
 		}),
 		new LoadingStep("Finishing Load Progress", "sync", () => {
 			loaderInterface.finish();
@@ -76,8 +75,9 @@ const Load = (function() {
 		step();
 	}
 
-	function onStepError() {
+	function onStepError(err) {
 		stopWatchDog();
+		showError(err);
 	}
 
 	function startWatchDog() {
@@ -88,10 +88,12 @@ const Load = (function() {
 	function stopWatchDog() {
 		if (watchdog !== undefined) {
 			clearTimeout(watchdog);
+			watchdog = undefined;
 		}
 	}
 
 	function onWatchDogException() {
+		console.log("Watchdog Intervention");
 		showError(new Error("Watchdog Intervention"));
 	}
 
@@ -110,7 +112,8 @@ const Load = (function() {
 				try {
 					currentStep.execute(onStepSucess, onStepError);
 				} catch(err) {
-					onStepError(err)
+					onStepError(err);
+					//return;
 				}
 				stepIndex++;
 				break;
@@ -118,9 +121,12 @@ const Load = (function() {
 				try {
 					currentStep.execute()
 				} catch(err) {
-					onStepError(err)
+					onStepError(err);
+					//return;
 				}
 				stepIndex++;
+			} else {
+				console.log("Unknown type: ", currentStep.type);
 			}
 		}
 	}
