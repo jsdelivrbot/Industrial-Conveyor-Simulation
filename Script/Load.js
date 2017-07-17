@@ -63,40 +63,41 @@ const Load = (function() {
 		new LoadingStep("Finishing Load Progress", "sync", () => {
 			loaderInterface.finish();
 		})
-	];	
+	];
+
 	function showError(err) {
 		// Todo: Make this better
 		console.error(err);
 	}
-	
+
 	function onStepSucess() {
 		stopWatchDog();
 		/* Continue process */
 		step();
 	}
-	
+
 	function onStepError() {
 		stopWatchDog();
 	}
-	
+
 	function startWatchDog() {
 		stopWatchDog();
 		watchdog = setTimeout(onWatchDogException, 5000);
 	}
-	
+
 	function stopWatchDog() {
 		if (watchdog !== undefined) {
 			clearTimeout(watchdog);
 		}
 	}
-	
+
 	function onWatchDogException() {
 		showError(new Error("Watchdog Intervention"));
 	}
-	
+
 	var stepIndex = 0;
 	var watchdog, currentStep;
-	
+
 	function step() {
 		if (watchdog !== undefined) {
 			return
@@ -123,6 +124,8 @@ const Load = (function() {
 			}
 		}
 	}
-	
+
 	return step;
 })();
+
+window.addEventListener("load", Load);
