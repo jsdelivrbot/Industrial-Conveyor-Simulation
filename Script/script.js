@@ -1,0 +1,1 @@
+window.addEventListener("load", Load.bind(Application));
