@@ -64,25 +64,29 @@ const Load = (function() {
 		})
 	];
 
-	function showError(err) {
-		// Todo: Make this better
-		console.error(err);
+	function showError(err, etype) {
+		stopWatchDog();
+		if (etype === "watchdog") {
+			err.name = "Watchdog Intervention";
+		} else if (etype === "assync") {
+			err.name = "Assyncronous Error";
+		} else if (etype === "assync-start") {
+			err.name = "Assyncronous Setup Error";
+		} else if (etype === "type") {
+			err.name = "Incorrect Step Type";
+		} else if (etype === "sync") {
+			err.name = "Syncronous Malfunction";
+		} else if (etype === "unexpected-return") {
+			err.name = "Loading Order Error";
+		} else {
+			err.name = "Unhandled Error";
+		}
+		loaderInterface.error(err.name, err.stack);
 	}
 
-	function onStepSucess() {
+	function startWatchDog(time = 5000) {
 		stopWatchDog();
-		/* Continue process */
-		step();
-	}
-
-	function onStepError(err) {
-		stopWatchDog();
-		showError(err);
-	}
-
-	function startWatchDog() {
-		stopWatchDog();
-		watchdog = setTimeout(onWatchDogException, 5000);
+		watchdog = setTimeout(onWatchDogException, time);
 	}
 
 	function stopWatchDog() {
@@ -93,11 +97,36 @@ const Load = (function() {
 	}
 
 	function onWatchDogException() {
-		console.log("Watchdog Intervention");
-		showError(new Error("Watchdog Intervention"));
+		var err = new Error("Assyncronous loading step timeout");
+		setErrorPlace(err, `At loading of step ${stepIndex}: ${stepList[stepIndex].label}`);
+		showError(err, "watchdog");
+	}
+
+	function setErrorPlace(err, place) {
+		err.stack = place+"\n"+err.stack;
+		//err.stack = err.stack.split("\n").splice(0, 0, place).join("\n");
 	}
 
 	var stepIndex = 0;
+
+	function onAssyncStepSucess(index) {
+		if (index+1 === stepIndex) {
+			stopWatchDog();
+			step();
+		} else {
+			var err = new Error(`Step ${index} returned unexpectedly`);
+			setErrorPlace(err, `At loading of step ${stepIndex}: ${stepList[stepIndex].label}`);
+			showError(err, "unexpected-return");
+		}
+	}
+
+	function onAssyncStepError(index, err) {
+		if (index === stepIndex) {
+			stopWatchDog();
+			showError(err, "assync");
+		}
+	}
+
 	var watchdog, currentStep;
 
 	function step() {
@@ -105,30 +134,34 @@ const Load = (function() {
 			return
 		}
 		var limit = 100;
-		while (stepIndex < stepList.length && ((limit--) > 0)) {
+		//while (stepIndex < stepList.length && ((limit--) > 0)) {
 			currentStep = stepList[stepIndex];
+			loaderInterface.update(currentStep.label, stepIndex/stepList.length);
 			if (currentStep.type === "assync") {
 				startWatchDog();
 				try {
-					currentStep.execute(onStepSucess, onStepError);
+					currentStep.execute(onAssyncStepSucess.bind(currentStep, stepIndex), onAssyncStepError.bind(currentStep, stepIndex));
 				} catch(err) {
-					onStepError(err);
-					//return;
+					onStepError(err, "assync-start");
+					return;
 				}
 				stepIndex++;
-				break;
+				//break;
 			} else if (currentStep.type === "sync") {
 				try {
 					currentStep.execute()
 				} catch(err) {
-					onStepError(err);
-					//return;
+					onStepError(err, "sync");
+					return;
 				}
 				stepIndex++;
+				setTimeout(step, 10);
 			} else {
-				console.log("Unknown type: ", currentStep.type);
+				var err = new Error(`Unkown Loading Step Type: ${currentStep.type}`);
+				setErrorPlace(err, `loading of step ${stepIndex}`);
+				onStepError(err, "type");
 			}
-		}
+		//}
 	}
 
 	return step;

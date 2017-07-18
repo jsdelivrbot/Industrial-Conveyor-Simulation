@@ -11,6 +11,8 @@ const GUI = (function() {
 			} catch (err) {
 				throw new Error("WebGl is not supported by the browser");
 			}
+			this.renderer.domElement.setAttribute("style", "position: absolute;	top: 0;	left: 0; display: block; opacity: 0.9");
+			document.body.appendChild(this.renderer.domElement);
 		},
 		initScene: function(gatherer) {
 			var scene = new THREE.Scene();
@@ -33,6 +35,7 @@ const GUI = (function() {
 		initCamera: function(gatherer) {
 			this.camera = new THREE.PerspectiveCamera(85,window.innerWidth / window.innerHeight,0.2,100);
 			this.camera.position.set(0, 0, 4);
+			this.onResize();
 		},
 		initEvents: function() {
 			addEventListener('resize', this.onResize.bind(this), false);
