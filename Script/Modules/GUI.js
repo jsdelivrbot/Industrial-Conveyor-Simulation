@@ -1,40 +1,19 @@
 const GUI = (function() {
 	return {
 		initRenderer: function(gatherer) {
-			let rendererConfig = {
-				antialias: gatherer.settings.antialias,
-				alpha: false,
-				clearColor: getComputedStyle(document.body)["background-color"]
-			}
-			try {
-				this.renderer = new THREE.WebGLRenderer(rendererConfig);
-			} catch (err) {
-				throw new Error("WebGl is not supported by the browser");
-			}
-			this.renderer.domElement.setAttribute("style", "position: absolute;	top: 0;	left: 0; display: block; opacity: 0.9");
+			this.renderer = ThreejsSetup.createRenderer(gatherer.settings.antialias);
+			this.renderer.domElement.setAttribute("style", "position: absolute;	top: 0;	left: 0; display: block; opacity: 0.01");
 			document.body.appendChild(this.renderer.domElement);
 		},
+		showRenderer: function() {
+			this.renderer.domElement.style.opacity = "inherit";
+			this.renderer.domElement.style.display = "block";
+		},
 		initScene: function(gatherer) {
-			var scene = new THREE.Scene();
-			function addLight(name, position, intensity) {
-				let light = new THREE.DirectionalLight(0xffffff,intensity);
-				light.position.copy(position);
-				light.name = name;
-				scene.add(light);
-				return light;
-			}
-			let lights = [
-			addLight("Top",		{ x: 0, y: 1, z: 0 },	2.935),
-			addLight("Front",	{ x: 0, y: 0, z: -1 },	2.382),
-			addLight("Back",	{ x: 0, y: 0, z: 1 },	2.3548),
-			addLight("Left",	{ x: -1, y: 0, z: 0 },	1.7764),
-			addLight("Right",	{ x: 1, y: 0, z: 0 },	1.7742),
-			addLight("Bottom",	{ x: 0, y: -1, z: 0 },	1.5161)];
-			this.scene = scene;
+			this.scene = ThreejsSetup.createScene();
 		},
 		initCamera: function(gatherer) {
-			this.camera = new THREE.PerspectiveCamera(85,window.innerWidth / window.innerHeight,0.2,100);
-			this.camera.position.set(0, 0, 4);
+			this.camera = ThreejsSetup.createCamera();
 			this.onResize();
 		},
 		initEvents: function() {
