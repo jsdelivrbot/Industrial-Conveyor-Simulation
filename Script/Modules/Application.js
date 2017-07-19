@@ -38,9 +38,10 @@ const Application = (function() {
 			renderFunc = gatherer.userInterface.render.bind(gatherer.userInterface);
 			updateCinematic = gatherer.cinematic.update.bind(gatherer.cinematic);
 			update(16);
+			window.requestAnimationFrame(loop);
 		},
-		setPerformancer: function(p) {
-			performancer = p;
+		collect: function(gatherer) {
+			this.gatherer = gatherer || (()=>{throw new Error("Couldn't retrieve gatherer")})();
 		},
 		onCursorMove: function(event) {
 			

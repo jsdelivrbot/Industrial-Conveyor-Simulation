@@ -24,6 +24,9 @@ Cinematic.prototype = {
 			return FastInterpolation.any(0, 0, 0.01, -0.03, 0.99, 1.03, 1, 1).at(t)/2;
 		}
 	},
+	collect: function(gatherer) {
+		this.camera = gatherer.camera;
+	},
 	update: function(elapsed) {
 		
 	}
